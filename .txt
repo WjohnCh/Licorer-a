@@ -1,0 +1,67 @@
+
+{
+  "idcliente": 1,
+  "FechaDeVenta": "2024-12-23",
+  "SubTotal": 72.00,
+  "Descuento": 0.00,
+  "CobroExtra": 12.00,
+  "detalles": [
+    {
+      "Cantidad": 4,
+      "PrecioUnitario": 72.00,      
+      "IdProducto": 10,
+      "IdPromocion": null
+    },
+    {
+      "IdProducto": null,
+      "Cantidad": 2,
+      "PrecioUnitario": 33.00,
+      "IdPromocion": 1
+    },
+    {
+      "IdProducto": 13,
+      "Cantidad": 6,
+      "PrecioUnitario": 7.00,
+      "IdPromocion": null
+    },
+    {
+      "IdProducto": null,
+      "Cantidad": 1,
+      "PrecioUnitario": 7.00,
+      "IdPromocion": 6
+    }
+  ],
+  "Credito":
+   {
+      "SaldoPendiente": 11.20,
+      "Detalle": null,
+   },
+  "ActivosPrestados": [
+   {
+      "idActivoFijo": 1,
+      "cantidad_prestada": 4,
+      "Estado": "pendiente"
+   }
+  ]
+}
+
+
+
+-- otro dato
+{
+
+  "idcliente": 2,
+  "FechaDeVenta": "2024-12-23",
+  "SubTotal": 72.00,
+  "Descuento": 0.00,
+  "CobroExtra": 12.00,
+  "detalles": []
+  "Credito:"{},
+  "ActivosPrestados": [
+   {
+      "idActivoFijo": 2,
+      "cantidad_prestada": 4,
+      "Estado": "pendiente"
+   }
+  ]
+}

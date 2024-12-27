@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulario de Venta</title>
+  <link href="./output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-8">
+  <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
+    <h1 class="text-2xl font-bold mb-4">Formulario de Venta</h1>
+    <form id="ventaForm" class="space-y-4">
+      <!-- Datos principales -->
+      <div>
+        <label class="block font-medium">Cliente</label>
+        <select id="idcliente" class="w-full p-2 border rounded" required>
+          <option value="">Seleccione un cliente</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block font-medium">Fecha de Venta</label>
+        <input type="date" id="FechaDeVenta" class="w-full p-2 border rounded" required>
+      </div>
+
+      <div>
+        <label class="block font-medium">Subtotal</label>
+        <input type="number" id="SubTotal" class="w-full p-2 border rounded" step="0.01" required>
+      </div>
+
+      <div>
+        <label class="block font-medium">Descuento</label>
+        <input type="number" id="Descuento" class="w-full p-2 border rounded" step="0.01">
+      </div>
+
+      <div>
+        <label class="block font-medium">Cobro Extra</label>
+        <input type="number" id="CobroExtra" class="w-full p-2 border rounded" step="0.01">
+      </div>
+
+      <!-- Detalles de la venta -->
+      <div>
+        <label class="block font-medium">Detalles</label>
+        <div id="detallesContainer" class="space-y-2"></div>
+        <button type="button" id="addDetalle" class="bg-blue-500 text-white px-4 py-2 rounded mt-2">Añadir Detalle</button>
+      </div>
+
+      <!-- Activos Prestados -->
+      <div>
+        <label class="block font-medium">Activos Prestados (Opcional)</label>
+        <div id="activosContainer" class="space-y-2"></div>
+        <button type="button" id="addActivo" class="bg-green-500 text-white px-4 py-2 rounded mt-2">Añadir Activo</button>
+      </div>
+
+      <!-- Crédito -->
+      <div>
+        <label class="block font-medium">Crédito (Opcional)</label>
+        <div>
+          <label class="block">Saldo Pendiente</label>
+          <input type="number" id="SaldoPendiente" class="w-full p-2 border rounded" step="0.01">
+        </div>
+
+        <div>
+          <label class="block">Detalle</label>
+          <textarea id="CreditoDetalle" class="w-full p-2 border rounded"></textarea>
+        </div>
+      </div>
+
+      <!-- Botón de envío -->
+      <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded">Enviar</button>
+    </form>
+  </div>
+
+  <script>
+    const detallesContainer = document.getElementById('detallesContainer');
+    const addDetalleButton = document.getElementById('addDetalle');
+    const activosContainer = document.getElementById('activosContainer');
+    const addActivoButton = document.getElementById('addActivo');
+    const clienteSelect = document.getElementById('idcliente');
+
+    // Cargar clientes en la lista desplegable
+    async function loadClientes() {
+      try {
+        const response = await fetch('/clientes');
+        const clientes = await response.json();
+
+        clientes.forEach(cliente => {
+          const option = document.createElement('option');
+          option.value = cliente.idcliente;
+          option.textContent = cliente.nombre;
+          clienteSelect.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error al cargar los clientes:', error);
+        alert('No se pudo cargar la lista de clientes');
+      }
+    }
+
+    // Añadir un nuevo detalle
+    addDetalleButton.addEventListener('click', () => {
+      const detalleDiv = document.createElement('div');
+      detalleDiv.className = 'space-y-2 p-2 border rounded';
+      detalleDiv.innerHTML = `
+        <label>Cantidad</label>
+        <input type="number" class="w-full p-2 border rounded detalle-cantidad" required>
+
+        <label>Precio Unitario</label>
+        <input type="number" class="w-full p-2 border rounded detalle-precio" step="0.01" required>
+
+        <label>ID Producto (Opcional)</label>
+        <input type="number" class="w-full p-2 border rounded detalle-idproducto">
+
+        <label>ID Promoción (Opcional)</label>
+        <input type="number" class="w-full p-2 border rounded detalle-idpromocion">
+      `;
+      detallesContainer.appendChild(detalleDiv);
+    });
+
+    // Añadir un nuevo activo
+    addActivoButton.addEventListener('click', () => {
+      const activoDiv = document.createElement('div');
+      activoDiv.className = 'space-y-2 p-2 border rounded';
+      activoDiv.innerHTML = `
+        <label>ID Activo Fijo</label>
+        <input type="number" class="w-full p-2 border rounded activo-id">
+
+        <label>Cantidad Prestada</label>
+        <input type="number" class="w-full p-2 border rounded activo-cantidad" required>
+
+        <label>Estado</label>
+        <input type="text" class="w-full p-2 border rounded activo-estado">
+      `;
+      activosContainer.appendChild(activoDiv);
+    });
+
+    // Manejar el envío del formulario
+    document.getElementById('ventaForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const detalles = [...detallesContainer.children].map(detalle => ({
+        Cantidad: parseFloat(detalle.querySelector('.detalle-cantidad').value),
+        PrecioUnitario: parseFloat(detalle.querySelector('.detalle-precio').value),
+        IdProducto: detalle.querySelector('.detalle-idproducto').value || null,
+        IdPromocion: detalle.querySelector('.detalle-idpromocion').value || null,
+      }));
+
+      const ActivosPrestados = [...activosContainer.children].map(activo => ({
+        idActivoFijo: activo.querySelector('.activo-id').value || null,
+        cantidad_prestada: parseFloat(activo.querySelector('.activo-cantidad').value),
+        Estado: activo.querySelector('.activo-estado').value,
+      }));
+
+      const data = {
+        idcliente: parseInt(document.getElementById('idcliente').value),
+        FechaDeVenta: document.getElementById('FechaDeVenta').value,
+        SubTotal: parseFloat(document.getElementById('SubTotal').value),
+        Descuento: parseFloat(document.getElementById('Descuento').value) || 0,
+        CobroExtra: parseFloat(document.getElementById('CobroExtra').value) || 0,
+        detalles,
+        ActivosPrestados: ActivosPrestados.length ? ActivosPrestados : undefined,
+        Credito: document.getElementById('SaldoPendiente').value ? {
+          SaldoPendiente: parseFloat(document.getElementById('SaldoPendiente').value),
+          Detalle: document.getElementById('CreditoDetalle').value || null
+        } : undefined
+      };
+
+      try {
+        const response = await fetch('/venta/productos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        alert(result.message || 'Venta procesada con éxito');
+      } catch (error) {
+        console.error('Error al enviar la venta:', error);
+        alert('Error al enviar la venta');
+      }
+    });
+
+    // Cargar los clientes al iniciar
+    loadClientes();
+  </script>
+</body>
+</html>
