@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Créditos</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 py-6">
+    <div class="container mx-auto p-4 bg-white rounded shadow">
+        <h1 class="text-2xl font-bold mb-4">Gestión de Créditos</h1>
+        <div id="creditos-container">
+            <!-- Créditos y créditos parciales serán añadidos aquí dinámicamente -->
+        </div>
+    </div>
+
+    <!-- Modal para agregar crédito parcial -->
+    <div id="modal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center hidden">
+        <div class="bg-white rounded p-4 w-96">
+            <h2 class="text-lg font-bold mb-4">Agregar Crédito Parcial</h2>
+            <form id="form-parcial">
+                <input type="hidden" id="modal-idCredito">
+                <div class="mb-4">
+                    <label for="monto" class="block font-medium">Monto Parcial</label>
+                    <input type="number" id="monto" class="w-full border px-2 py-1" required>
+                </div>
+                <div class="mb-4">
+                    <label for="fecha" class="block font-medium">Fecha de Pago</label>
+                    <input type="date" id="fecha" class="w-full border px-2 py-1" value="${new Date().toISOString().slice(0, 10)}" required>
+                </div>
+                <div class="mb-4">
+                    <label for="detalle" class="block font-medium">Detalle</label>
+                    <textarea id="detalle" class="w-full border px-2 py-1"></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button type="button" class="bg-gray-500 text-white px-4 py-2 rounded mr-2" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const creditosEndpoint = '/deuda/verCredito';
+        const creditosParcialesEndpoint = '/deuda/creditoParcial';
+        const agregarPagoEndpoint = '/deuda/PagoCredito';
+
+        async function fetchCreditos() {
+            try {
+                const response = await axios.get(creditosEndpoint);
+                const creditos = response.data;
+                const container = document.getElementById('creditos-container');
+                container.innerHTML = '';
+
+                for (const credito of creditos) {
+                    const creditoDiv = document.createElement('div');
+                    creditoDiv.className = 'border rounded p-4 mb-4';
+
+                    creditoDiv.innerHTML = `
+                        <h2 class="text-xl font-bold">Crédito #${credito.idCredito} - ${credito.nombre}</h2>
+                        <p><strong>Saldo Pendiente:</strong> ${credito.SaldoPendiente}</p>
+                        <p><strong>Fecha de Venta:</strong> ${credito.FechaDeVenta}</p>
+                        <div id="parciales-${credito.idCredito}" class="mt-2"></div>
+                        <button class="bg-green-500 text-white px-4 py-2 rounded mt-2" onclick="openModal(${credito.idCredito})">Agregar Crédito Parcial</button>
+                        <button id="marcar-pagado-${credito.idCredito}" class="bg-blue-500 text-white px-4 py-2 rounded mt-2 hidden" onclick="marcarComoPagado(${credito.idCredito})">Marcar como Pagado</button>
+                    `;
+
+                    container.appendChild(creditoDiv);
+                    await fetchCreditosParciales(credito.idCredito, credito.SaldoPendiente);
+                }
+            } catch (error) {
+                console.error('Error al obtener los créditos:', error);
+            }
+        }
+
+        async function fetchCreditosParciales(idCredito, saldoPendiente) {
+            try {
+                const response = await axios.get(`${creditosParcialesEndpoint}/${idCredito}`);
+                const parciales = response.data;
+                const parcialesDiv = document.getElementById(`parciales-${idCredito}`);
+
+                if (parciales.length > 0) {
+                    parcialesDiv.innerHTML = '<strong>Créditos Parciales:</strong>';
+                    const list = document.createElement('ul');
+                    list.className = 'list-disc list-inside';
+
+                    parciales.forEach(parcial => {
+                        const item = document.createElement('li');
+                        item.textContent = `Monto: ${parcial.MontoParcial}, Fecha: ${parcial.FechaPago}, Detalle: ${parcial.Detalle || 'N/A'}`;
+                        list.appendChild(item);
+                    });
+
+                    parcialesDiv.appendChild(list);
+                } else {
+                    document.getElementById(`marcar-pagado-${idCredito}`).classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error al obtener los créditos parciales:', error);
+            }
+        }
+
+        function openModal(idCredito) {
+            document.getElementById('modal-idCredito').value = idCredito;
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        document.getElementById('form-parcial').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const idCredito = document.getElementById('modal-idCredito').value;
+            const MontoParcial = document.getElementById('monto').value;
+            const fecha = document.getElementById('fecha').value;
+            const detalle = document.getElementById('detalle').value;
+
+            try {
+                await axios.post(agregarPagoEndpoint, { idCredito, MontoParcial, fecha, detalle });
+                alert('Crédito parcial agregado correctamente');
+                closeModal();
+                fetchCreditos();
+            } catch (error) {
+                console.error('Error al agregar el crédito parcial:', error);
+                alert('Error al agregar el crédito parcial');
+            }
+        });
+
+        async function marcarComoPagado(idCredito) {
+            try {
+                await axios.post(agregarPagoEndpoint, { idCredito, estado: 'Pagado' });
+                alert('Crédito marcado como pagado');
+                fetchCreditos();
+            } catch (error) {
+                console.error('Error al marcar como pagado:', error);
+                alert('Error al marcar como pagado');
+            }
+        }
+
+        fetchCreditos();
+    </script>
+</body>
+</html>

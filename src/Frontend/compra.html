@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrar Compra</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+    <h1 class="text-2xl font-bold mb-6">Registrar Compra</h1>
+
+    <!-- Formulario General -->
+    <form id="compraForm" class="space-y-4">
+      <!-- Fecha -->
+      <div>
+        <label for="fechaCompra" class="block text-sm font-medium text-gray-700">Fecha de Compra</label>
+        <input 
+          type="date" 
+          id="fechaCompra" 
+          class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          value="">
+      </div>
+
+      <!-- Proveedor -->
+      <div>
+        <label for="proveedor" class="block text-sm font-medium text-gray-700">Proveedor</label>
+        <select 
+          id="proveedor" 
+          class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        </select>
+      </div>
+
+      <!-- Productos Agregados -->
+      <div>
+        <h2 class="text-lg font-semibold mb-2">Productos</h2>
+        <table class="w-full table-auto border-collapse border border-gray-300 text-left">
+          <thead>
+            <tr>
+              <th class="border border-gray-300 px-4 py-2">Producto</th>
+              <th class="border border-gray-300 px-4 py-2">Cantidad</th>
+              <th class="border border-gray-300 px-4 py-2">Precio Unitario</th>
+              <th class="border border-gray-300 px-4 py-2">Subtotal</th>
+              <th class="border border-gray-300 px-4 py-2">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="productosList">
+            <!-- Productos añadidos dinámicamente -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Total Compra -->
+      <div>
+        <label for="totalCompra" class="block text-sm font-medium text-gray-700">Total de la Compra</label>
+        <input 
+          type="number" 
+          id="totalCompra" 
+          class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" 
+          step="0.01"
+          value="0.00">
+      </div>
+
+      <div class="flex justify-end space-x-4">
+        <button 
+          type="button" 
+          id="addProductButton" 
+          class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Agregar Producto</button>
+        <button 
+          type="submit" 
+          class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Confirmar Compra</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Modal Agregar Producto -->
+  <div id="productModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+      <h2 class="text-lg font-bold mb-4">Agregar Producto</h2>
+      <form id="productForm" class="space-y-4">
+        <!-- Marca -->
+        <div>
+          <label for="marca" class="block text-sm font-medium text-gray-700">Marca</label>
+          <select id="marca" class=" p-2 mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            
+          </select>
+        </div>
+        <!-- Producto -->
+        <div>
+          <label for="producto" class="block text-sm font-medium text-gray-700">Producto</label>
+          <select id="producto" class=" p-2 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></select>
+        </div>
+        <!-- Cantidad -->
+        <div>
+          <label for="cantidad" class="block text-sm font-medium text-gray-700">Cantidad</label>
+          <input 
+            type="number" 
+            id="cantidad" 
+            class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        </div>
+        <!-- Precio Unitario -->
+        <div>
+          <label for="precioUnitario" class="block text-sm font-medium text-gray-700">Precio Unitario</label>
+          <input 
+          type="number" 
+          step="0.01"
+            id="precioUnitario" 
+            class="mt-1  p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            >
+        </div>
+        <div class="flex justify-end space-x-4">
+          <button 
+            type="button" 
+            id="cancelProductButton" 
+            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Cancelar</button>
+          <button 
+            type="submit" 
+            class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Agregar</button>
+        </div>
+      </form>
+    </div>
+    
+</div>
+  <script src="compra.js"></script>
+</body>
+</html>

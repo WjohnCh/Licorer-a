@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Activos Físicos</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 py-6">
+    <div class="container mx-auto p-4 bg-white rounded shadow">
+        <h1 class="text-2xl font-bold mb-4">Gestión de Activos Físicos</h1>
+        <table class="table-auto w-full border-collapse border border-gray-300">
+            <thead>
+                <tr>
+                    <th class="border border-gray-300 px-4 py-2">ID Cliente</th>
+                    <th class="border border-gray-300 px-4 py-2">Cliente</th>
+                    <th class="border border-gray-300 px-4 py-2">Activo</th>
+                    <th class="border border-gray-300 px-4 py-2">Cantidad Prestada</th>
+                    <th class="border border-gray-300 px-4 py-2">Cantidad Devuelta</th>
+                    <th class="border border-gray-300 px-4 py-2">Estado</th>
+                    <th class="border border-gray-300 px-4 py-2">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="data-table">
+                <!-- Data will be dynamically inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const apiEndpoint = "/deudad/ActivoFisico/Clientes";
+        const updateEndpoint = "/deuda/ActivoFisico";
+
+        // Fetch data from the API and populate the table
+        async function fetchData() {
+            try {
+                const response = await axios.get(apiEndpoint);
+                const data = response.data;
+                const tableBody = document.getElementById("data-table");
+                tableBody.innerHTML = "";
+
+                data.forEach(item => {
+                    const row = document.createElement("tr");
+
+                    row.innerHTML = `
+                        <td class="border border-gray-300 px-4 py-2">${item.idcliente}</td>
+                        <td class="border border-gray-300 px-4 py-2">${item.Cliente}</td>
+                        <td class="border border-gray-300 px-4 py-2">${item.Activo}</td>
+                        <td class="border border-gray-300 px-4 py-2">${item.cantidad_prestada}</td>
+                        <td class="border border-gray-300 px-4 py-2">
+                            <input type="number" id="cantidad-${item.idretornoactivo}" class="border px-2 py-1 w-full" value="${item.cantidad_devuelta}">
+                        </td>
+                        <td class="border border-gray-300 px-4 py-2">
+                            <select id="estado-${item.idretornoactivo}" class="border px-2 py-1 w-full">
+                                <option value="Pendiente" ${item.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                                <option value="Pagado" ${item.estado === 'Pagado' ? 'selected' : ''}>Pagado</option>
+                                <option value="Devuelto" ${item.estado === 'Devuelto' ? 'selected' : ''}>Devuelto</option>
+                            </select>
+                        </td>
+                        <td class="border border-gray-300 px-4 py-2">
+                            <button onclick="updateData(${item.idretornoactivo})" class="bg-blue-500 text-white px-4 py-2 rounded">Enviar</button>
+                        </td>
+                    `;
+
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        }
+
+        // Update data using the API
+        async function updateData(idRetornoActivo) {
+            const cantidad = document.getElementById(`cantidad-${idRetornoActivo}`).value;
+            const estado = document.getElementById(`estado-${idRetornoActivo}`).value;
+
+            try {
+                await axios.put(updateEndpoint, {
+                    idRetornoActivo,
+                    cantidad,
+                    estado
+                });
+
+                alert("Datos actualizados correctamente.");
+                fetchData(); // Refresh the table
+            } catch (error) {
+                console.error("Error updating data:", error);
+                alert("Error al actualizar los datos.");
+            }
+        }
+
+        // Initialize data fetching on page load
+        fetchData();
+    </script>
+</body>
+</html>

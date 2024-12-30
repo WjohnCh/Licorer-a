@@ -19,13 +19,37 @@ app.get('/clientes', async (req, res) => {
     res.send(error.message)
   }
 })
+app.get('/Marcas', async (req, res) => {
+
+  try {
+    const [results] = await db.query(`
+      SELECT idMarca, Nombre FROM Marca`)
+
+    res.send(results)
+  } catch (error) {
+    res.send(error.message)
+  }
+})
+app.get('/productos/:idMarca', async (req, res) => {
+  const { idMarca } = req.params
+  try {
+    const [results] = await db.query(`
+      SELECT idProducto, nombre FROM producto
+      where idMarca = ?`,
+      { replacements: [idMarca] })
+
+    res.send(results)
+  } catch (error) {
+    res.send(error.message)
+  }
+})
 app.get('/Buscar/Productos/:nombre', async (req, res) => {
-  const {nombre} = req.params
-  
+  const { nombre } = req.params
+
   try {
     const [results] = await db.query(`
       SELECT idProducto,Nombre,PrecioActual FROM producto
-      WHERE nombre LIKE ?`, 
+      WHERE nombre LIKE ?`,
       { replacements: [`%${nombre}%`] });
 
     res.send(results)
@@ -35,11 +59,11 @@ app.get('/Buscar/Productos/:nombre', async (req, res) => {
 })
 
 app.get('/Buscar/Promociones/:nombre', async (req, res) => {
-  const {nombre} = req.params
+  const { nombre } = req.params
   try {
     const [results] = await db.query(`
       SELECT IdPromocion,Nombre,Precio FROM promocion
-      WHERE nombre LIKE ?`, 
+      WHERE nombre LIKE ?`,
       { replacements: [`%${nombre}%`] });
 
     res.send(results)
@@ -47,13 +71,22 @@ app.get('/Buscar/Promociones/:nombre', async (req, res) => {
     res.send(error.message)
   }
 })
+app.get('/Buscar/Activos', async (req, res) => {
+  try {
+    const [results] = await db.query(`
+      SELECT idActivoFijo,Nombre FROM activofijo`)
 
+    res.send(results)
+  } catch (error) {
+    res.send(error.message)
+  }
+})
 app.get('/Buscar/Activos/:nombre', async (req, res) => {
-  const {nombre} = req.params
+  const { nombre } = req.params
   try {
     const [results] = await db.query(`
       SELECT idActivoFijo,Nombre FROM activofijo
-      WHERE nombre LIKE ?`, 
+      WHERE nombre LIKE ?`,
       { replacements: [`%${nombre}%`] });
 
     res.send(results)
@@ -62,15 +95,13 @@ app.get('/Buscar/Activos/:nombre', async (req, res) => {
   }
 })
 
-app.post('/venta/productos', async (req, res) => {
 
-  console.log(req.body);
-  
+app.post('/venta/productos', async (req, res) => {
 
   let { idcliente, FechaDeVenta, SubTotal, Descuento, CobroExtra, detalles,
     activosPrestados, Credito } = req.body;
 
-  if(idcliente == ''){
+  if (idcliente == '') {
     idcliente = null
   }
 
@@ -87,9 +118,15 @@ app.post('/venta/productos', async (req, res) => {
     for (const detalle of detalles) {
       const { Cantidad, PrecioUnitario, IdProducto, IdPromocion } = detalle;
 
+      const [[{PrecioCompra_Actual}]] = await db.query(
+        `SELECT PrecioCompra_Actual FROM producto 
+        where idproducto = ?`,
+        { replacements: [IdProducto] }
+      );
+    
       await db.query(
-        `CALL InsertarDetalleVenta(?, ?, ?, ?, ?)`,
-        { replacements: [idVenta, Cantidad, PrecioUnitario, IdProducto, IdPromocion] }
+        `CALL InsertarDetalleVenta(?, ?, ?, ?, ?, ?)`,
+        { replacements: [idVenta, Cantidad, PrecioUnitario, IdProducto, IdPromocion, PrecioCompra_Actual] }
       );
 
       if (IdProducto != null) {
@@ -137,6 +174,40 @@ app.post('/venta/productos', async (req, res) => {
   }
 });
 
+app.get('/deuda/verCredito', async (req, res) => {
+
+  try {
+    const [result] = await db.query(`
+      select c.idCredito , cc.nombre, SaldoPendiente,FechaDeVenta
+      from credito c
+      join venta v
+      on c.idventa = v.idventa
+      join cliente cc on
+      cc.idcliente = v.idcliente
+      where c.estado = 'Pendiente'`)
+
+    res.status(200).send(result);
+  } catch (error) {
+    console.error('Error al buscar los creditos:', error);
+    res.status(500).send('Error al insertar el credito');
+  }
+})
+
+app.get('/deuda/creditoParcial/:idCredito', async (req, res) => {
+
+  const { idCredito } = req.params
+  try {
+    const [result] = await db.query(`
+      SELECT MontoParcial, FechaPago, Detalle
+      FROM creditoParcial
+      WHERE idCredito = ?`,
+      { replacements: [idCredito] })
+    res.status(200).send(result);
+  } catch (error) {
+    console.error('Error al buscar los creditos parciales:', error);
+    res.status(500).send('Error al buscar los creditos parciales');
+  }
+})
 
 app.post('/deuda/PagoCredito', async (req, res) => {
   const { idCredito, MontoParcial, fecha, detalle, estado } = req.body
@@ -176,9 +247,18 @@ app.post('/deuda/PagoCredito', async (req, res) => {
     console.error('Error al insertar el creditoParcial', error);
     res.status(500).send('Error al insertar el creditoParcial');
   }
-
 })
 
+app.get("/deudad/ActivoFisico/Clientes", async (req, res) => {
+  try {
+
+    const [results] = await db.query(`SELECT * FROM retornoActivos`)
+
+    res.status(200).send(results);
+  } catch (error) {
+    res.status(500).send('Error al buscar el cliente');
+  }
+})
 
 app.put('/deuda/ActivoFisico', async (req, res) => {
   const { idRetornoActivo, cantidad, estado } = req.body;
@@ -197,6 +277,97 @@ app.put('/deuda/ActivoFisico', async (req, res) => {
     console.error('Error al modificar el prestamo:', error);
     res.status(500).send('Error al modificar el prestamo');
   }
+})
+
+
+// AUMENTAR EL STOCK CON LAS COMPRAS
+app.get("/proveedor", async (req, res) => {
+
+  try {
+    const [result] = await db.query(`SELECT idproveedor, nombre FROM Proveedor`)
+    res.send(result)
+  } catch (error) {
+    console.error('Error al ver Proveedor:', error);
+    res.status(500).send('Error al ver Proveedor');
+  }
+
+})
+
+
+app.post('/compra/actualizar/stock', async (req, res) => {
+
+  const { FechaCompra, IdProveedor, TotalCompra, Detalles } = req.body;
+  try {
+
+    const [{ idVenta }] = await db.query(`CALL InsertarCompra(?,?,?)`,
+      { replacements: [FechaCompra, IdProveedor, TotalCompra] }
+    )
+
+    for (let Detalle of Detalles) {
+      const { idProducto, Cantidad, PrecioUnitario } = Detalle;
+
+      
+      await db.query(
+        `CALL InsertarDetalleCompra(?, ?, ?, ?);`,
+        { replacements: [idVenta, idProducto, Cantidad, PrecioUnitario] }
+      )
+
+      await fetch(`http://localhost:3000/ponderado/precioCompra/${idProducto}`);
+
+    }
+
+    res.status(200).send({ message: 'Compra agregada correctamente' });
+  } catch (error) {
+    console.error('Error al aniadir la compra:', error);
+    res.status(500).send('Error al aniadir la compra');
+  }
+
+})
+
+app.get('/ponderado/precioCompra/:idproducto', async (req, res) => {
+
+  const { idproducto } = req.params;
+
+  try {
+
+    const [result] = await db.query(`
+    SELECT c.idcompra, c.FechaCompra, d.cantidad, d.preciounitario, p.nombre, p.precioCompra_Actual, p.stockActual FROM compra c
+    join detallecompra d
+    on c.idcompra = d.idcompra
+    join producto p
+    on p.idproducto = d.idproducto
+    where p.idproducto = ?
+    order by c.FechaCompra desc, c.idcompra desc;
+    `, { replacements: [idproducto] })
+
+
+    let stockactual2 = result[0].stockActual
+    let ponderado = 0;
+    for (let producto of result) {
+
+      const { cantidad, preciounitario } = producto
+
+      if (stockactual2 >= cantidad) {
+        ponderado += (cantidad * preciounitario)
+        stockactual2 -= cantidad
+      } else {
+        ponderado += (stockactual2 * preciounitario)
+        break;
+      }
+    }
+    
+    await db.query(
+      `UPDATE Producto 
+      SET PrecioCompra_Actual = ?
+      WHERE idproducto =?`,
+      { replacements: [ponderado/result[0].stockActual, idproducto] }
+    )
+    res.status(200).send("Actualizado Correctamente");
+  } catch (error) {
+    console.error('Error al aniadir la compra:', error);
+    res.status(200).send("Error al actualizar");
+  }
+
 })
 
 

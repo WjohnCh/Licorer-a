@@ -65,3 +65,24 @@
    }
   ]
 }
+
+
+REALIZAR UNA COMPRA
+{
+  "FechaCompra": "2021-11-12",
+  "IdProveedor": 1,
+  "TotalCompra": 100,
+  "Detalles": [
+    {
+      "idProducto":10,
+      "Cantidad":2,
+      "PrecioUnitario":3.66
+    },
+    {
+      "idProducto":2,
+      "Cantidad":10,
+      "PrecioUnitario":4.66
+    }
+    ]
+}
+
